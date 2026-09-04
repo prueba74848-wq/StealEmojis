@@ -27,7 +27,7 @@
             case "@vendetta/commands":
                 return vendetta.commands;
             default:
-                throw new Error("[StealSticker] Unknown module: " + id);
+                throw new Error("[StealEmojis] Unknown module: " + id);
         }
     }
 
@@ -61,8 +61,6 @@ var import_common4 = require("@vendetta/metro/common");
 var import_patcher = require("@vendetta/patcher");
 var import_utils = require("@vendetta/utils");
 var import_components3 = require("@vendetta/ui/components");
-var import_toasts3 = require("@vendetta/ui/toasts");
-var import_common5 = require("@vendetta/metro/common");
 
 // src/StealEmoji/modules.ts
 var import_metro = require("@vendetta/metro");
@@ -430,17 +428,6 @@ function patchMessageEmojiActionSheet() {
     var nameLower = (name || "").toLowerCase();
     if (!nameLower.includes("emoji") || nameLower.includes("addtoserver")) {
       return originalOpenLazy.apply(this, args);
-    }
-    try {
-      var debugInfo = "sheet=" + name +
-        " ctxKeys=" + Object.keys(context ?? {}).join(",") +
-        " emojiNode=" + JSON.stringify(context?.emojiNode ?? null) +
-        " emoji=" + JSON.stringify(context?.emoji ?? null) +
-        " renderableEmoji=" + JSON.stringify(context?.renderableEmoji ?? null) +
-        " reaction=" + JSON.stringify(context?.reaction ?? null);
-      import_common5.clipboard.setString(debugInfo);
-      (0, import_toasts3.showToast)("Emoji sheet debug copied to clipboard \u2014 paste it somewhere");
-    } catch (e) {
     }
     var emoji = resolveEmoji(context);
     if (!lazySheet || typeof lazySheet.then !== "function") {
