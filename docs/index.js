@@ -80,6 +80,29 @@ var { default: GuildIcon, GuildIconSizes } = (0, import_metro.findByProps)("Guil
 var { downloadMediaAsset } = (0, import_metro.findByProps)("downloadMediaAsset") ?? {};
 var constants = (0, import_metro.findByProps)("Fonts", "Permissions");
 
+// src/StealEmoji/lib/utils/resolveEmoji.ts
+// Defensive emoji extractor: tries the historically-known flat shape first,
+// then falls back to the newer `emojiNode` wrapper shape (and a couple of
+// plausible nested variants), so a future client rename doesn't null out
+// every field at once again.
+function resolveEmoji(ctxOrProps) {
+  if (!ctxOrProps)
+    return null;
+  var c = ctxOrProps;
+  var direct = c.emoji ?? c.renderableEmoji ?? c.reaction?.emoji;
+  if (direct)
+    return direct;
+  var node = c.emojiNode;
+  if (node) {
+    if (node.id || node.name)
+      return node;
+    var nested = node.emoji ?? node.renderableEmoji ?? node.reaction?.emoji ?? node.node;
+    if (nested)
+      return nested;
+  }
+  return null;
+}
+
 // src/StealEmoji/ui/components/EmojiButtons.tsx
 var import_metro2 = require("@vendetta/metro");
 var import_common3 = require("@vendetta/metro/common");
@@ -409,12 +432,17 @@ function patchMessageEmojiActionSheet() {
       return originalOpenLazy.apply(this, args);
     }
     try {
-      var debugInfo = "sheet=" + name + " ctxKeys=" + Object.keys(context ?? {}).join(",") + " emoji=" + JSON.stringify(context?.emoji ?? null) + " renderableEmoji=" + JSON.stringify(context?.renderableEmoji ?? null) + " reaction=" + JSON.stringify(context?.reaction ?? null);
+      var debugInfo = "sheet=" + name +
+        " ctxKeys=" + Object.keys(context ?? {}).join(",") +
+        " emojiNode=" + JSON.stringify(context?.emojiNode ?? null) +
+        " emoji=" + JSON.stringify(context?.emoji ?? null) +
+        " renderableEmoji=" + JSON.stringify(context?.renderableEmoji ?? null) +
+        " reaction=" + JSON.stringify(context?.reaction ?? null);
       import_common5.clipboard.setString(debugInfo);
       (0, import_toasts3.showToast)("Emoji sheet debug copied to clipboard \u2014 paste it somewhere");
     } catch (e) {
     }
-    var emoji = context?.emoji ?? context?.renderableEmoji ?? context?.reaction?.emoji;
+    var emoji = resolveEmoji(context);
     if (!lazySheet || typeof lazySheet.then !== "function") {
       return originalOpenLazy.apply(this, args);
     }
@@ -477,7 +505,7 @@ function patchMessageEmojiActionSheet() {
           throw e;
         }
         var props = arguments[0] ?? {};
-        var finalEmoji = module2._seCurrentEmoji ?? props?.emoji ?? props?.renderableEmoji ?? props?.reaction?.emoji;
+        var finalEmoji = module2._seCurrentEmoji ?? resolveEmoji(props);
         if (finalEmoji && res) {
           try {
             injectButtons(res, finalEmoji);
@@ -592,7 +620,7 @@ function appendToTree(tree, element) {
 function patchSheet(funcName, sheetModule) {
   return (0, import_patcher.after)(funcName, sheetModule, function(callArgs, res) {
     var props = callArgs[0] ?? {};
-    var e = props?.emoji ?? props?.renderableEmoji ?? props?.reaction?.emoji;
+    var e = resolveEmoji(props);
     if (!e)
       return;
     injectButtons(res, e);
