@@ -1,0 +1,12 @@
+{
+  "name": "stealemoji",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.4.0",
+    "esbuild": "^0.20.2"
+  }
+}
